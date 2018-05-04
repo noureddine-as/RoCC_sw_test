@@ -99,8 +99,8 @@ log:
 	@$(SPIKE) -p$(N_PROC) --isa=$(ISA) $(TARGET).out 2> $(LOG_FILE)
 
 
-.PHONY: build-sim-cache
-build-sim-cache: $(TARGET).out
+.PHONY: sim-cache
+sim-cache: $(TARGET).out
 #  --hartids=<a,b,...>   Explicitly specify hartids, default is 0,1,...
 #  --ic=<S>:<W>:<B>      Instantiate a cache model with S sets,
 #  --dc=<S>:<W>:<B>        W ways, and B-byte blocks (with S and
