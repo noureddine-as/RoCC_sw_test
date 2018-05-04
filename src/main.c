@@ -13,7 +13,6 @@ int main(int argc, char** argv)
     while (wait)
         ;
 
-    // Doesn't actually go on the stack, because there are lots of GPRs.
     int i = 0;
     while (text[i]) {
         char lower = text[i] | 32;
