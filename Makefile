@@ -23,19 +23,27 @@ ISA ?= rv64imafd
 ABI ?= lp64
 N_PROC ?= 1
 SPIKE_RBB_PORT = 9824
+CEMUL_RBB_PORT = 9823
 #SPIKE_SIMULATION ?= -DSPIKE_SIMULATION
-#ENABLE_DEBUG = 1
+ENABLE_DEBUG = 1
 
 ifndef RISCV
 $(error "[ ERROR ] - RISCV variable not set!")
 endif
 
-
 CC = $(RISCV)/bin/riscv64-unknown-elf-gcc
 LD = $(RISCV)/bin/riscv64-unknown-elf-ld
 DUMPER = $(RISCV)/bin/riscv64-unknown-elf-objdump
 SIZE = $(RISCV)/bin/riscv64-unknown-elf-size
+GDB = riscv64-unknown-elf-gdb
 SPIKE = $(RISCV)/bin/spike
+C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfig
+RBB_C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfigRBB
+
+OPENOCD = $(RISCV)/bin/openocd
+SPIKE_CFG_FILE = ./spike.cfg
+CEMUL_CFG_FILE = ./cemul.cfg
+
 
 ifdef ENABLE_DEBUG
 CFLAGS = -g -Og -ggdb  
@@ -87,10 +95,15 @@ interactive-debug:
 	@echo "-------------------  Starting Interactive Debugging  -------------------"
 	$(SPIKE) -d -p$(N_PROC) --isa=$(ISA) $(TARGET).out
 
-.PHONY: gdb-debug
-gdb-debug:
+.PHONY: spike-gdb-debug
+spike-gdb-debug:
 	@echo "-------------------  Starting GDB Debugging  -------------------"
 	$(SPIKE) --rbb-port=$(SPIKE_RBB_PORT) -p$(N_PROC) --isa=$(ISA) $(TARGET).out
+
+.PHONY: cemul-gdb-debug
+cemul-gdb-debug:
+	@echo "-------------------  Starting GDB Debugging  -------------------"
+	$(RBB_C_EMULATOR) +jtag_rbb_enable=1 --rbb-port=$(CEMUL_RBB_PORT) $(TARGET).out
 
 .PHONY: log
 log:
@@ -98,6 +111,20 @@ log:
 	@echo ">> " $(LOG_FILE)
 	@$(SPIKE) -p$(N_PROC) --isa=$(ISA) $(TARGET).out 2> $(LOG_FILE)
 
+.PHONY: spike-ocd-launch
+spike-ocd-launch:
+	@echo "-------------------  Starting OpenOCD -------------------"
+	$(OPENOCD) -f $(SPIKE_CFG_FILE)
+
+.PHONY: cemul-ocd-launch
+cemul-ocd-launch:
+	@echo "-------------------  Starting OpenOCD -------------------"
+	$(OPENOCD) -f $(CEMUL_CFG_FILE)
+
+.PHONY: gdb-launch
+gdb-launch:
+	@echo "-------------------  Starting GNU Debugger -------------------"
+	$(GDB) $(TARGET).out
 
 .PHONY: sim-cache
 sim-cache: $(TARGET).out
@@ -112,6 +139,13 @@ sim-cache: $(TARGET).out
 	@echo ""
 	@echo "-------------  Build done, starting simulation  -------------"
 	@$(SPIKE) -p$(N_PROC) --isa=$(ISA) --ic=64:4:8 --dc=64:4:8 --l2=256:8:8 $(TARGET).out
+
+.PHONY: emulate
+emulate:
+	@echo "-------------------  Starting C++ Emulator  -------------------"
+	$(C_EMULATOR) $(TARGET).out
+
+
 
 .PHONY: clean
 clean:
