@@ -1,32 +1,27 @@
+#/*======================================================================*/
+#/* TIMA LABORATORY                                                      */
+#/*======================================================================*/
 #******************************************************************************
 #    Noureddine Ait Said
 #    nouredddine.aitsaid0@gmail.com
 #------------------------------------------------------------------------------
+
 SRC_DIR = ./src/
 BUILD_DIR = .
 
-SOURCES = $(SRC_DIR)entry.S \
-			$(SRC_DIR)main.c \
-			$(SRC_DIR)syscalls.c
+include sources.mk
 
-INCLUDES = -I./include
-
-#include sources.mk
 ##################################################################
-PROJi  = proj1
+#  COMMON PARAMETERS
+##################################################################
 TARGET = $(BUILD_DIR)/$(PROJi)
 
 LINKER = test.ld
 LOG_FILE = $(PROJi)_log.txt
 
-ISA ?= rv64imafd
-ABI ?= lp64
-N_PROC ?= 1
-SPIKE_RBB_PORT = 9824
-CEMUL_RBB_PORT = 9823
-#SPIKE_SIMULATION ?= -DSPIKE_SIMULATION
-ENABLE_DEBUG = 1
-
+##################################################################
+#  GETTING TOOLS
+##################################################################
 ifndef RISCV
 $(error "[ ERROR ] - RISCV variable not set!")
 endif
@@ -35,7 +30,7 @@ CC = $(RISCV)/bin/riscv64-unknown-elf-gcc
 LD = $(RISCV)/bin/riscv64-unknown-elf-ld
 DUMPER = $(RISCV)/bin/riscv64-unknown-elf-objdump
 SIZE = $(RISCV)/bin/riscv64-unknown-elf-size
-GDB = riscv64-unknown-elf-gdb
+GDB = $(RISCV)/bin/riscv64-unknown-elf-gdb
 SPIKE = $(RISCV)/bin/spike
 C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfig
 RBB_C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfigRBB
@@ -44,8 +39,11 @@ OPENOCD = $(RISCV)/bin/openocd
 SPIKE_CFG_FILE = ./spike.cfg
 CEMUL_CFG_FILE = ./cemul.cfg
 
+##################################################################
+#  SETTING FLAGS
+##################################################################
 
-ifdef ENABLE_DEBUG
+ifeq ($(ENABLE_DEBUG),1)
 CFLAGS = -g -Og -ggdb  
 else
 CFLAGS = -O3
@@ -144,8 +142,6 @@ sim-cache: $(TARGET).out
 emulate:
 	@echo "-------------------  Starting C++ Emulator  -------------------"
 	$(C_EMULATOR) $(TARGET).out
-
-
 
 .PHONY: clean
 clean:

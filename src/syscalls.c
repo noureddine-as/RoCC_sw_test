@@ -114,18 +114,6 @@ void _init(int cid, int nc)
   init_tls();
   thread_entry(cid, nc);
 
-  // only single-threaded programs should ever get here.
-
-/*
-  // Used for performance statistics
-  char buf[NUM_COUNTERS * 32] __attribute__((aligned(64)));
-  char* pbuf = buf;
-  for (int i = 0; i < NUM_COUNTERS; i++)
-    if (counters[i])
-      pbuf += sprintf(pbuf, "%s = %d\n", counter_names[i], counters[i]);
-  if (pbuf != buf)
-    printstr(buf);
-*/
   exit( main(0, 0));
 }
 
