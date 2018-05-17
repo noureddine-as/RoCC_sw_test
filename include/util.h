@@ -4,10 +4,16 @@
 #define __UTIL_H
 
 extern void setStats(int enable);
+extern int printf(const char* fmt, ...);
 
 #include <stdint.h>
 
 #define static_assert(cond) switch(0) { case 0: case !!(long)(cond): ; }
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
+#define MTIME           (*(volatile long long *)(0x02000000 + 0xbff8))
+#define MTIMECMP        ((volatile long long *)(0x02000000 + 0x4000))
 
 static int verify(int n, const volatile int* test, const int* verify)
 {
