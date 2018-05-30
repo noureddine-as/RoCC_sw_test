@@ -15,6 +15,8 @@ extern int printf(const char* fmt, ...);
 #define MTIME           (*(volatile long long *)(0x02000000 + 0xbff8))
 #define MTIMECMP        ((volatile long long *)(0x02000000 + 0x4000))
 
+#define MTIMECMP_BASE        0x02004000
+
 static int verify(int n, const volatile int* test, const int* verify)
 {
   int i;
