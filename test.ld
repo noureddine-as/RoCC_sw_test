@@ -29,7 +29,7 @@ SECTIONS
   .data : { *(.data) }
 
   .sdata : {
-    __global_pointer$ = . + 0x800;
+    _gp = . + 0x800;
     *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
   }
@@ -41,19 +41,24 @@ SECTIONS
   }
   .bss : { *(.bss) }
 
-  /* thread-local data segment */
-  .tdata :
-  {
-    _tls_data = .;
-    *(.tdata.begin)
-    *(.tdata)
-    *(.tdata.end)
+      .heap : {
+       . = ALIGN(4);
+       _heap = .;
+       _heap_start = .;
+       . += 0x1000;
+       _heap_end = .;
+    }
+
+  .stack : {
+   _stack_end = .;
+   . += 0x1000;
+
+        . = ALIGN(4);
+
+   _stack = .;
+   __stack = _stack;
   }
-  .tbss :
-  {
-    *(.tbss)
-    *(.tbss.end)
-  }
+
 
   /* End of uninitalized data segement */
   _end = .;

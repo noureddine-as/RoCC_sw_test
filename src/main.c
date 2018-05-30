@@ -3,22 +3,8 @@
 /*======================================================================*/
 
 char text[] = "Vafgehpgvba frgf jnag gb or serr!";
-
-#define ENABLE_DEBUG 1
-
-#if ENABLE_DEBUG
-    volatile int wait = 1;
-#endif
-
-int main(int argc, char** argv)
+void foo()
 {
-#if ENABLE_DEBUG
-    while (wait)
-        ;
-#else
-    printf("Old text: %s \n", text);
-#endif
-
     int i = 0;
     while (text[i]) {
         char lower = text[i] | 32;
@@ -28,12 +14,11 @@ int main(int argc, char** argv)
             text[i] -= 13;
         i++;
     }
-
-#if ENABLE_DEBUG
-    while (!wait)
-        ;
-#else
+}
+int main(int argc, char** argv)
+{
+    printf("Old text: %s \n", text);
+    foo();
     printf("New text: %s \n", text);
-#endif
     return 0;
 }
