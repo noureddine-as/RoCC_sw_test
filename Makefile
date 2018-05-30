@@ -16,7 +16,7 @@ include sources.mk
 ##################################################################
 TARGET = $(BUILD_DIR)/$(PROJi)
 
-LINKER = test.ld
+LINKER = link.ld
 LOG_FILE = $(PROJi)_log.txt
 
 ##################################################################

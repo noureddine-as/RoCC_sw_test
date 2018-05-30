@@ -39,24 +39,40 @@ SECTIONS
     *(.sbss .sbss.* .gnu.linkonce.sb.*)
     *(.scommon)
   }
-  .bss : { *(.bss) }
+  .bss : {
+    *(.bss)
+   }
 
-      .heap : {
-       . = ALIGN(4);
-       _heap = .;
-       _heap_start = .;
-       . += 0x1000;
-       _heap_end = .;
-    }
+  /* thread-local data segment */
+  .tdata :
+  {
+    _tls_data = .;
+    _tdata_begin = . ;
+    *(.tdata)
+    _tdata_end = .;
+  }
+  .tbss :
+  {
+    *(.tbss)
+    _tbss_end = .;
+  }
+
+  .heap : {
+    . = ALIGN(4);
+    _heap = .;
+    _heap_start = .;
+    . += 0x1000;
+    _heap_end = .;
+  }
 
   .stack : {
-   _stack_end = .;
-   . += 0x1000;
+    _stack_end = .;
+    . += 0x1000;
 
-        . = ALIGN(4);
+    . = ALIGN(4);       
 
-   _stack = .;
-   __stack = _stack;
+    _stack = .;
+    __stack = _stack;
   }
 
 

@@ -39,7 +39,8 @@ static inline void wfi()
 
 #endif // !__ASSEMBLER__
 
-#define MTIMECMP_BASE        0x02004000
+#define MTIMECMP_BASE       	0x02004000
+#define MTIME_BASE        		0x0200bff8
 
 #define IPI_SOFT       0x1
 #define IPI_FENCE_I    0x2

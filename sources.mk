@@ -1,7 +1,8 @@
 
 SOURCES = $(SRC_DIR)entry.S \
 			$(SRC_DIR)main.c \
-			$(SRC_DIR)syscalls.c
+			$(SRC_DIR)syscalls.c \
+			$(SRC_DIR)trap_handler.c
 
 INCLUDES = -I./include
 
@@ -9,7 +10,7 @@ INCLUDES = -I./include
 ##################################################################
 #  SPECIFIC PARAMETERS
 ##################################################################
-PROJi  = proj1
+PROJi  = executable
 N_PROC ?= 1
 ISA ?= rv64imafd
 ABI ?= lp64
