@@ -68,6 +68,13 @@ _start:
   # initialize global pointer
   la gp, _gp
 
+init_stack:
+  /* init stack section */
+  la  a0, _stack_end  /* note the stack grows from top to bottom */
+  la  a1, __stack-4   /* section end is actually the start of the next section */
+  li  a2, 0
+  jal fill_block
+
   # initialize thread pointer
   la  tp, _stack
 
@@ -75,7 +82,7 @@ _start:
   la sp, _stack
 
   # Goto _init
-  j       _init
+  j  _init
 
 
   .align 2
@@ -220,6 +227,14 @@ return_from_trap_handler:
   addi sp, sp, 272
   mret
 
+/* Fills memory blocks */
+fill_block:
+  sw    a2, 0(a0)
+  bgeu  a0, a1, fb_end
+  addi  a0, a0, 4
+  j   fill_block
+fb_end:
+  ret
 
 # tohost and fromhost variables are used to communicate with the front-end server
 # this serves to print text for example using the functions defines in syscalls
