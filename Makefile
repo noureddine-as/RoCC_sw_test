@@ -1,6 +1,3 @@
-#/*======================================================================*/
-#/* TIMA LABORATORY                                                      */
-#/*======================================================================*/
 #******************************************************************************
 #    Noureddine Ait Said
 #    nouredddine.aitsaid0@gmail.com
@@ -32,8 +29,10 @@ DUMPER = $(RISCV)/bin/riscv64-unknown-elf-objdump
 SIZE = $(RISCV)/bin/riscv64-unknown-elf-size
 GDB = $(RISCV)/bin/riscv64-unknown-elf-gdb
 SPIKE = $(RISCV)/bin/spike
-C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfig
+#C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfig
 RBB_C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfigRBB
+RoCC_EMULATOR = /home/noureddine-as/PFE_2018/rocket-chip/emulator/emulator-freechips.rocketchip.system-RoccExampleConfig
+C_EMULATOR = $(RoCC_EMULATOR)
 
 OPENOCD = $(RISCV)/bin/openocd
 SPIKE_CFG_FILE = ./spike.cfg

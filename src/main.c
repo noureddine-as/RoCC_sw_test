@@ -1,50 +1,87 @@
-/*======================================================================*/
-/* TIMA LABORATORY                                                      */
-/*======================================================================*/
-#include "encoding.h"
-#include "util.h"
+// int main(int argc, char** argv)
+// {
+// 	printf("Hello, WOrld!\n");
 
-void init_csrs()
+// 	return 99;
+// }
+
+#include "xcustom.h"
+
+
+
+
+#define k_DO_WRITE 0
+#define k_DO_READ 1
+#define k_DO_LOAD 2
+#define k_DO_ACCUM 3
+
+#define XCUSTOM_ACC 0
+
+#define doWrite(y, rocc_rd, data)                                       \
+  ROCC_INSTRUCTION(XCUSTOM_ACC, y, data, rocc_rd, k_DO_WRITE);
+#define doWrite1(y, rocc_rd, data)                                       \
+  ROCC_INSTRUCTION(XCUSTOM_ACC, y, data, rocc_rd, k_DO_WRITE);
+#define doRead(y, rocc_rd)                                              \
+  ROCC_INSTRUCTION(XCUSTOM_ACC, y, 0, rocc_rd, k_DO_READ);
+#define doLoad(y, rocc_rd, mem_addr)                                    \
+  ROCC_INSTRUCTION(XCUSTOM_ACC, y, mem_addr, rocc_rd, k_DO_LOAD);
+#define doAccum(y, rocc_rd, data) \
+  ROCC_INSTRUCTION(XCUSTOM_ACC, y, data, rocc_rd, k_DO_ACCUM);
+
+#define XCUSTOM_CHAR 2
+
+
+#define XCUSTOM_TRANS 1
+
+#define doTranslate(y, vaddr)                                \
+ROCC_INSTRUCTION(XCUSTOM_TRANS, y, vaddr, 0, 0);
+
+
+void assert(int cond)
 {
-    write_csr(mie, 0);
-    write_csr(sie, 0);
-    write_csr(mip, 0);
-    write_csr(sip, 0);
-    write_csr(mideleg, 0);
-    write_csr(medeleg, 0);
+  if(!cond){
+  printf("[INFO] Condition failed\n");
+	exit(99);}
 }
 
-void enable_timer_interrupts()
-{
-    MTIMECMP[0] = (uint64_t)-1ULL;
-    set_csr(mie, MIP_MTIP);
-    set_csr(mstatus, MSTATUS_MIE);    
-}
+int main() {
 
-int main(int argc, char** argv)
-{
-    init_csrs();
-    
-    int local = 0;
+  unsigned long int data [] = {0xdead, 0xbeef, 0x0bad, 0xf00d}, y;
 
-    unsigned hartid = read_csr(mhartid);
-    unsigned m_status = read_csr(mstatus);
-    unsigned s_status = read_csr(sstatus);
+  // unsigned short addr = 1;
+  // printf("[INFO] Write R[%d] = 0x%lx\n", addr, data[0]);
+  // doWrite(y, addr, data[0]);
+  unsigned short addr = 2;
+  doWrite(y, addr, data[0]);
 
-    enable_timer_interrupts();
+  // printf("[INFO] Read R[%d]\n", addr);
+  // doRead(y, addr);
+  // printf("[INFO]   Received 0x%lx (expected 0x%lx)\n", y, data[0]);
+  // assert(y == data[0]);
 
-    MTIMECMP[0] = MTIME + 4000;
+  // unsigned long int data_accum = -data[0] + data[1];
+  // printf("[INFO] Accum R[%d] with 0x%lx\n", addr, data_accum);
+  // doAccum(y, addr, data_accum);
+  // assert(y == data[0]);
 
-    printf("mhartid = 0x%llx   -   mstatus = 0x%llx   -   sstatus = 0x%llx   -   mideleg = 0x%llx   -   medeleg = 0x%llx \n",
-            hartid, m_status, s_status, read_csr(mideleg), read_csr(medeleg));
+  // printf("[INFO] Read R[%d]\n", addr);
+  // doRead(y, addr);
+  // printf("[INFO]   Received 0x%lx (expected 0x%lx)\n", y, data[1]);
+  // assert(y == data[1]);
 
-    printf("Starting waiting loop ..  mtime = %lld  ..  mtimecmp = %lld \n", MTIME, MTIMECMP[0]);
+  // unsigned long int data_addr;
+  // doTranslate(data_addr, &data[2]);
+  // printf("[INFO] Load 0x%lx (virt: 0x%p, phys: 0x%p) via L1 virtual address\n",
+  //        data[2], &data[2], (void *) data_addr);
+  // doLoad(y, addr, &data[2]);
+  // assert(y == data[1]);
 
-    while (local < 8000) {
-        local++;
-        if(local % 50 == 0)
-            printf("Waiting ..  mtime = %lld  ..  mtimecmp = %lld \n", MTIME, MTIMECMP[0]);
-    }
+  // printf("[INFO] Read R[%d]\n", addr);
+  // doRead(y, addr);
+  // printf("[INFO]   Received 0x%lx (expected 0x%lx)\n", y, data[2]);
+  // assert(y == data[2]);
 
-    return 0;
+
+
+  return 0;
 }

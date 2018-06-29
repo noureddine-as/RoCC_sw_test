@@ -1,9 +1,6 @@
-#/*======================================================================*/
-#/* TIMA LABORATORY                                                      */
-#/*======================================================================*/
+# See LICENSE for license details.
 
 #include "encoding.h"
-#include "mtrap.h"
 
 #if __riscv_xlen == 64
 # define LREG ld
@@ -17,9 +14,7 @@
 
   .section ".text.init"
   .globl _start
-
-.macro INIT_GPRS_I
-
+_start:
   li  x1, 0
   li  x2, 0
   li  x3, 0
@@ -52,38 +47,93 @@
   li  x30,0
   li  x31,0
 
-.endm
+  # enable FPU and accelerator if present
+  li t0, MSTATUS_FS | (MSTATUS_XS & (MSTATUS_XS >> 1))
+  csrs mstatus, t0
 
-_start:
-  INIT_GPRS_I
+  # make sure XLEN agrees with compilation choice
+  li t0, 1
+  slli t0, t0, 31
+#if __riscv_xlen == 64
+  bgez t0, 1f
+#else
+  bltz t0, 1f
+#endif
+2:
+  li a0, 1
+  sw a0, tohost, t0
+  j 2b
+1:
+
+#ifdef __riscv_flen
+  # initialize FPU if we have one
+  la t0, 1f
+  csrw mtvec, t0
+
+  fssr    x0
+  fmv.s.x f0, x0
+  fmv.s.x f1, x0
+  fmv.s.x f2, x0
+  fmv.s.x f3, x0
+  fmv.s.x f4, x0
+  fmv.s.x f5, x0
+  fmv.s.x f6, x0
+  fmv.s.x f7, x0
+  fmv.s.x f8, x0
+  fmv.s.x f9, x0
+  fmv.s.x f10,x0
+  fmv.s.x f11,x0
+  fmv.s.x f12,x0
+  fmv.s.x f13,x0
+  fmv.s.x f14,x0
+  fmv.s.x f15,x0
+  fmv.s.x f16,x0
+  fmv.s.x f17,x0
+  fmv.s.x f18,x0
+  fmv.s.x f19,x0
+  fmv.s.x f20,x0
+  fmv.s.x f21,x0
+  fmv.s.x f22,x0
+  fmv.s.x f23,x0
+  fmv.s.x f24,x0
+  fmv.s.x f25,x0
+  fmv.s.x f26,x0
+  fmv.s.x f27,x0
+  fmv.s.x f28,x0
+  fmv.s.x f29,x0
+  fmv.s.x f30,x0
+  fmv.s.x f31,x0
+1:
+#endif
 
   # initialize trap vector
   la t0, trap_entry
   csrw mtvec, t0
 
-  # gp = Global Pointer
-  # tp = Thread Pointer
-  # sp = Stack Pointer
-
   # initialize global pointer
-  la gp, _gp
+.option push
+.option norelax
+  la gp, __global_pointer$
+.option pop
 
-init_stack:
-  /* init stack section */
-  la  a0, _stack_end  /* note the stack grows from top to bottom */
-  la  a1, __stack-4   /* section end is actually the start of the next section */
-  li  a2, 0
-  jal fill_block
+  la  tp, _end + 63
+  and tp, tp, -64
 
-  # initialize thread pointer
-  la  tp, _stack
+  # get core id
+  csrr a0, mhartid
+  # for now, assume only 1 core
+  li a1, 1
+1:bgeu a0, a1, 1b
 
-  # initialize stack pointer
-  la sp, _stack
+  # give each core 128KB of stack + TLS
+#define STKSHIFT 17
+  sll a2, a0, STKSHIFT
+  add tp, tp, a2
+  add sp, a0, 1
+  sll sp, sp, STKSHIFT
+  add sp, sp, tp
 
-  # Goto _init
-  j  _init
-
+  j _init
 
   .align 2
 trap_entry:
@@ -122,73 +172,12 @@ trap_entry:
   SREG x31, 31*REGBYTES(sp)
 
   csrr a0, mcause
-  # // if it's an exception go to exception_handler
-  bgez a0, 1f
-
-  # // else discard the MSB and decode the rest
-  sll a0, a0, 1
-
-  # Is it a machine timer interrupt?
-  li a1, IRQ_M_TIMER*2
-  # // else if not a timer interrupt go to forward 1:
-  bne a1, a0, 1f
-
-machine_timer_interrupt_handler:
-  # Yes.  Simply clear MTIP and write -1ULL to mtimecmp
-  li a1, MIP_MTIP
-  csrc mie, a1
-  li a1, -1ULL
-  # we write mtimecmp address to t0
-  li t0, MTIMECMP_BASE
-  # then write -1LL to mtimecmp
-  SREG a1, (t0)
-  j return_from_trap_handler
-
-1:
-  # Is it an IPI?
-  li a0, IRQ_M_SOFT * 2
-  bne a0, a1, general_trap_handler
-
-machine_software_interrupt_handler:
-  # Yes.  First, clear the MIPI bit.
-  LREG a0, MENTRY_IPI_OFFSET(sp)
-  sw x0, (a0)
-  fence
-
-  # Now, decode the cause(s).
-#ifdef __riscv_atomic
-  addi a0, sp, MENTRY_IPI_PENDING_OFFSET
-  amoswap.w a0, x0, (a0)
-#else
-  lw a0, MENTRY_IPI_PENDING_OFFSET(sp)
-  sw x0, MENTRY_IPI_PENDING_OFFSET(sp)
-#endif
-  and a1, a0, IPI_SOFT
-  beqz a1, 1f
-  csrs mip, MIP_SSIP
-1:
-  andi a1, a0, IPI_FENCE_I
-  beqz a1, 1f
-  fence.i
-1:
-  andi a1, a0, IPI_SFENCE_VMA
-  beqz a1, 1f
-  sfence.vma
-1:
-  andi a1, a0, IPI_HALT
-  beqz a1, general_trap_handler
-  wfi
-  j 1b
-
-general_trap_handler:
-  csrr a0, mcause
   csrr a1, mepc
   mv a2, sp
   jal handle_trap
   csrw mepc, a0
 
-return_from_trap_handler:
-  # Remain in M-mode after mret
+  # Remain in M-mode after eret
   li t0, MSTATUS_MPP
   csrs mstatus, t0
 
@@ -227,17 +216,18 @@ return_from_trap_handler:
   addi sp, sp, 272
   mret
 
-/* Fills memory blocks */
-fill_block:
-  sw    a2, 0(a0)
-  bgeu  a0, a1, fb_end
-  addi  a0, a0, 4
-  j   fill_block
-fb_end:
-  ret
+.section ".tdata.begin"
+.globl _tdata_begin
+_tdata_begin:
 
-# tohost and fromhost variables are used to communicate with the front-end server
-# this serves to print text for example using the functions defines in syscalls
+.section ".tdata.end"
+.globl _tdata_end
+_tdata_end:
+
+.section ".tbss.end"
+.globl _tbss_end
+_tbss_end:
+
 .section ".tohost","aw",@progbits
 .align 6
 .globl tohost
